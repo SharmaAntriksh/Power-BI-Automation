@@ -1,3 +1,5 @@
+// Tabular Nuget - https://www.nuget.org/packages/Microsoft.AnalysisServices.NetCore.retail.amd64/19.55.3.1?_src=template
+
 using System;
 using Microsoft.AnalysisServices.Tabular;
 using Excel = Microsoft.Office.Interop.Excel;
