@@ -4,15 +4,15 @@ using Excel = Microsoft.Office.Interop.Excel;
 using System.IO;
 using System.Collections.Generic;
 
-namespace Practicing_TOM
+namespace Export_Measures_From_PowerBI
 {
     class Program
     {
         static Model model = null;
         static Server server = null;
+        
         static void Main(string[] args)
         {
-
             connectToServer();
             writeMeasuresToExcel(tableName: "Report Measures", getAllMeasures());
             server.Disconnect();
@@ -21,10 +21,14 @@ namespace Practicing_TOM
         static void connectToServer()
         {
             server = new Server();
-            server.Connect(@"localhost:51369");
 
+            // For Power BI:
+            server.Connect(@"localhost:56811");
             model = server.Databases[0].Model;
-            //model = server.Databases.GetByName("Contoso").Model;
+
+            // For SSAS:
+            // server.Connect(@"ServerName\InstanceName");
+            // model = server.Databases.GetByName("Contoso").Model;
         }
 
         static List<Measure> getAllMeasures()
