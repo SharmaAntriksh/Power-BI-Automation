@@ -1,37 +1,55 @@
 using System;
 using Microsoft.AnalysisServices.Tabular;
-using System.Linq;
 using Excel = Microsoft.Office.Interop.Excel;
 using System.IO;
+using System.Collections.Generic;
 
 namespace Practicing_TOM
 {
     class Program
     {
         static Model model = null;
-        
+        static Server server = null;
         static void Main(string[] args)
         {
+
             connectToServer();
-            writeMeasuresToExcel(tableName: "Report Measures");
+            writeMeasuresToExcel(tableName: "Report Measures", getAllMeasures());
+            server.Disconnect();
         }
 
         static void connectToServer()
         {
-            Server server = new Server();
-            
-            // For Power BI:
-            server.Connect(@"localhost:56811");
+            server = new Server();
+            server.Connect(@"localhost:51369");
+
             model = server.Databases[0].Model;
-            
-            // For SSAS:
-            // server.Connect(@"ServerName\InstanceName");
-            // model = server.Databases.GetByName("Contoso").Model;
+            //model = server.Databases.GetByName("Contoso").Model;
         }
 
-        static void writeMeasuresToExcel(string tableName)
+        static List<Measure> getAllMeasures()
         {
-            Excel.Application xlApp = new Microsoft.Office.Interop.Excel.Application();
+            var allTables = new List<Table>();
+            foreach (Table table in model.Tables) 
+            { 
+                allTables.Add(table); 
+            }
+
+            var allMeasures = new List<Measure>();
+            foreach (Table table in allTables)
+            {
+                foreach (Measure measure in table.Measures) 
+                { 
+                    allMeasures.Add(measure); 
+                }
+            }
+
+            return allMeasures;
+        }
+
+        static void writeMeasuresToExcel(string tableName, List<Measure> measureList )
+        {
+            Excel.Application xlApp = new Excel.Application();
             var workboks = xlApp.Workbooks;
             Excel.Workbook wb = workboks.Add();
             Excel.Worksheet ws = wb.Worksheets[1];
@@ -39,7 +57,6 @@ namespace Practicing_TOM
 
             int rowNumber = 1;
             int colNumber = 0;
-            Table sales = model.Tables[tableName];
 
             string[] columnHeaders = 
             { 
@@ -56,7 +73,7 @@ namespace Practicing_TOM
                 colNumber++;
             }
 
-            foreach (Measure m in sales.Measures)
+            foreach (Measure m in measureList)
             {
                 ws.Range[$"A{rowNumber}"].Value = m.Name;
                 ws.Range[$"B{rowNumber}"].Value = m.Expression;
