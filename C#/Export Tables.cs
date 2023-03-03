@@ -19,13 +19,13 @@ namespace Export_Power_BI_Tables
         {
             string server = "localhost:52966"; // xmla endpoint in case of Power BI Service, server name in case of SSAS on premise
             string database = "Contoso 500K"; // dataset name or database name, in case of PBI desktop no need to specify
-            string userName = "abcdef.onmicrosoft.com"; // windows or PBI Service Login name
-            string userPassword = "****************";// windows or PBI Service Login password
+            string userName = "abcdef.onmicrosoft.com"; // windows or PBI Service Login name, in case of PBI desktop no need to specify
+            string userPassword = "****************";// windows or PBI Service Login password, in case of PBI desktop no need to specify
 
-            extractTableWithDAXQuery(server, database, userName, userPassword, SSASType.PbiDesktop);
+            exportTableWithDAXQuery(server, database, userName, userPassword, SSASType.PbiDesktop);
         }
 
-        static void extractTableWithDAXQuery(string server, string database, string userName, string userPassword, SSASType ssasType = SSASType.PbiDesktop)
+        static void exportTableWithDAXQuery(string server, string database, string userName, string userPassword, SSASType ssasType = SSASType.PbiDesktop)
         {
             string connString = "";
 
