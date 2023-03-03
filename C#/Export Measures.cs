@@ -10,38 +10,74 @@ namespace Practicing_TOM
 {
     class Program
     {
-        static Model model = null;
-        static Server server = null;
-        
-        static void Main(string[] args){
-            
-            connectToServer();
-            writeMeasuresToExcel(tableName: "Report Measures", getAllMeasures());
-            server.Disconnect();
-            
+        enum SSASType
+        {
+            PbiDesktop,
+            PbiService,
+            SsasOnPremise
         }
 
-        static void connectToServer(){
-            
-            server = new Server();
-            
-            // For Power BI:
-            server.Connect(@"localhost:56811");
-            model = server.Databases[0].Model;
+        static Model model = null;
+        static Server server = null;
 
-            // For SSAS:
-            // server.Connect(@"ServerName\InstanceName");
-            // model = server.Databases.GetByName("Contoso").Model;
+        static void Main(string[] args){
+
+            string server = "localhost:52966"; // xmla endpoint in case of Power BI Service, server name in case of SSAS on premise
+            string database = "Contoso 500K"; // dataset name or database name, in case of PBI desktop no need to specify
+            string userName = "abcdef.onmicrosoft.com"; // windows or PBI Service Login name, in case of PBI desktop no need to specify
+            string userPassword = "****************";// windows or PBI Service Login password, in case of PBI desktop no need to specify
+
+            connectToServer(serverName, database, userName, userPassword, SSASType.PbiService);
+            writeMeasuresToExcel(getAllMeasures());
+            server.Disconnect();
+
+        }
+
+        static void connectToServer(string serverName, string databaseName, string userName, string userPassword, SSASType ssasType = SSASType.PbiDesktop){
+
+            string connString = "";
+
+            switch (ssasType)
+            {
+                case SSASType.PbiDesktop:
+                    connString = $@"DataSource={serverName};";
+                    break;
+                case SSASType.PbiService:
+                    connString = $@"DataSource={serverName};Initial Catalog={databaseName};User ID={userName};Password={userPassword};";
+                    break;
+                case SSASType.SsasOnPremise:
+                    connString = $@"DataSource={serverName};Initial Catalog={databaseName};User ID={userName};Password={userPassword};";
+                    break;
+            }
+
+            server = new Server();
+            server.Connect(connString);
+
+            switch (ssasType)
+            {
+                case SSASType.PbiDesktop:
+                    model = server.Databases[0].Model;
+                    break;
+                case SSASType.SsasOnPremise:
+                    model = server.Databases.GetByName(databaseName).Model;
+                    break;
+                case SSASType.PbiService:
+                    model = server.Databases.GetByName(databaseName).Model;
+                    break;
+            }
+
         }
 
         static List<Measure> getAllMeasures(){
 
             var allTables = new List<Table>();
+
             foreach (Table table in model.Tables) { 
                 allTables.Add(table); 
             }
 
             var allMeasures = new List<Measure>();
+
             foreach (Table table in allTables){
                 foreach (Measure measure in table.Measures) { 
                     allMeasures.Add(measure); 
@@ -49,11 +85,11 @@ namespace Practicing_TOM
             }
 
             return allMeasures;
-            
+
         }
 
-        static void writeMeasuresToExcel(string tableName, List<Measure> measureList ){
-            
+        static void writeMeasuresToExcel(List<Measure> measureList ){
+
             Excel.Application xlApp = new Excel.Application();
             var workboks = xlApp.Workbooks;
             Excel.Workbook wb = workboks.Add();
@@ -99,13 +135,12 @@ namespace Practicing_TOM
             
             string filePath = @"C:\Users\antsharma\Downloads\Power BI Measures.xlsx";
 
-            if (File.Exists(filePath)){ 
-                File.Delete(filePath); 
-            }
+            if (File.Exists(filePath)){  File.Delete(filePath); }
 
             wb.SaveAs2(filePath);
             wb.Close();
             xlApp.Quit();
+
         }
     }
 }
