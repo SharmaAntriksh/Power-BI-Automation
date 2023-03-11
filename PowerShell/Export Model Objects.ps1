@@ -1,5 +1,3 @@
-#Work in Progress
-
 [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.AnalysisServices.Tabular")
 
 $Server = New-Object Microsoft.AnalysisServices.Tabular.Server
@@ -28,7 +26,7 @@ $Model.Tables | ForEach-Object {
 }
 
 $ExcelApp = New-Object -comobject Excel.Application
-$ExcelApp.Visible = $true
+$ExcelApp.Visible = $false
 
 # Table Worksheet
 
@@ -37,20 +35,36 @@ $Worksheet = $Workbook.Worksheets[1]
 $Worksheet.Name = "Tables"
 
 $ColumnNames = @(
-    'Measure Name', 
-    "Expression", 
-    "Format String", 
-    "Hidden", 
-    "Data Type"
+    'Table Name', 
+    "Column Count", 
+    "Measure Count", 
+    "Hierarchies", 
+    "IsHidden"
+    "ModifiedTime",
+    "ExcludeFromModelRefresh",
+    "RefreshPolicy",
+    "CalculationGroup",
+    "Partitions"
 )
 
 for($col = 1; $col -le $ColumnNames.length;  $col++){
     $WorkSheet.Cells.Item(1,$col) = $ColumnNames[$col - 1]
 }
 
-$Model.Tables | ForEach-Object {
-    $Table = $_
-    #$Table.Measures | ForEach-Object { $MeasuresList.Add([Tuple]::Create($_, $Table.Name)) }
-    $Table.Columns | ForEach-Object { $ColumnsList.Add([Tuple]::Create($_, $Table.Name)) }
+for($row = 2; $row -le $TablesList.Length - 1; $row++){
+    $WorkSheet.Cells.Item($row,1) = $TablesList[$row].Name
+    $WorkSheet.Cells.Item($row,2) = $TablesList[$row].Columns.Count
+    $WorkSheet.Cells.Item($row,3) = $TablesList[$row].Measures.Count
+    $WorkSheet.Cells.Item($row,4) = $TablesList[$row].Hierarchies.Count
+    $WorkSheet.Cells.Item($row,5) = $TablesList[$row].IsHidden
+    $WorkSheet.Cells.Item($row,6) = $TablesList[$row].ModifiedTime
+}
 
-    $TablesList
+$FileName = "C:\Users\antsharma\Downloads\Tables.xlsx"
+if (Test-Path $FileName) {
+  Remove-Item $FileName
+}
+
+$Workbook.SaveAs($FileName)
+$WorkBook.Close($true)
+$ExcelApp.Quit()
