@@ -1,6 +1,7 @@
 import msal
 import requests
 import pandas as pd
+from pathlib import Path
 
 
 def get_access_token():
@@ -107,4 +108,6 @@ final_df = pd.merge(workspace_df, dataset_df, how='inner', left_on = 'WorkspaceI
 columns_to_keep = ['WorkspaceID', 'WorkspaceName', 'DatasetID_x', 'DatasetName', 'RefreshType', 'StartTime', 'EndTime', 'ServiceExceptionJson']
 final_df = final_df[columns_to_keep]
 final_df.rename(columns = {'DatasetID_x':'DatasetID'}, inplace = True)
-final_df.to_excel(r"C:\Users\antsharma\OneDrive\Desktop\Refresh History.xlsx", index= False)
+
+home = str(Path.home())
+final_df.to_excel(home + r"\Desktop\Refresh History.xlsx", index= False)
