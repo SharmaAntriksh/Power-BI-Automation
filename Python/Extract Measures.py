@@ -1,4 +1,4 @@
-import clr # clr from pythonnet, must install other clr and then install pythonnet
+import clr # clr from pythonnet, must uninstall other clr and then install pythonnet
 import pandas as pd
 
 # if you have Power BI or Analysis Services installed then you will find this dll at C:\Windows\Microsoft.NET\assembly\GAC_MSIL
