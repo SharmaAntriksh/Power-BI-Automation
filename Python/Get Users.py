@@ -20,7 +20,11 @@ def get_access_token():
     authority_url = f'https://login.microsoftonline.com/{pbi_tenant_id}'
     scopes = [r'https://analysis.windows.net/powerbi/api/.default']
 
-    client = msal.ConfidentialClientApplication(app_id, authority=authority_url, client_credential=app_secret)
+    client = msal.ConfidentialClientApplication(
+        app_id, 
+        authority=authority_url, 
+        client_credential=app_secret
+    )
     
     response = client.acquire_token_for_client(scopes)
     token = response.get('access_token')
