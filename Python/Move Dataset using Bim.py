@@ -58,8 +58,9 @@ def get_workspaces():
     response_request = requests.get(workspaces, headers=headers)
     result = response_request.json()
     
-    workspace_name = [workspace['name'] for workspace in result['value']]
-    
+    workspace_names = [workspace['name'] for workspace in result['value']]
+    return workspace_names
+
 
 # Write Downloads Model.bim file to a specific folder on system
 def export_model_json(server: Tabular.Server):
@@ -126,8 +127,8 @@ def publish_model_bim(bim_file_path, server: Tabular.Server):
             )
 
             script = Tabular.JsonScripter.ScriptCreateOrReplace(db)
+            server.Execute(script)
 
 
 publish_model_bim(r"C:\Users\antsharma\Downloads\Power BI\\", server)
 server.Disconnect()
-            server.Execute(script)
