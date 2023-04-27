@@ -1,7 +1,11 @@
 import json
 import clr # From pythonnet, remove any existing clr -- pip uninstall clr
 import os
+import msal
+import requests
 
+
+# Tabular Object Model DLLs that are required to interact with SSAS Dataset
 
 folder = r"C:\Windows\Microsoft.NET\assembly\GAC_MSIL"
 
@@ -14,24 +18,54 @@ clr.AddReference(folder +
 clr.AddReference(folder +
     r"\Microsoft.AnalysisServices.Tabular.Json\v4.0_19.61.1.4__89845dcd8080cc91\Microsoft.AnalysisServices.Tabular.Json.dll")
 
-
 import Microsoft.AnalysisServices as AS
 import Microsoft.AnalysisServices.Tabular as Tabular
 
 
-workspace_xmla = "source workspace XMLA"
-username = 'pbi service user id'
-password = 'pbi sevice user pass'
-conn_string = f"DataSource={workspace_xmla};User ID={username};Password={password};"
+app_id = '********************************************' # Azure application ID
+pbi_tenant_id = '********************************************'
+app_secret = '********************************************' # Secret code of that application
 
-server = Tabular.Server()
-server.Connect(conn_string)
 
-folder_path = r"C:\Users\antsharma\Downloads\Power BI\\"
-  
+def get_access_token():
+    
+    authority_url = f'https://login.microsoftonline.com/{pbi_tenant_id}'
+    scopes = [r'https://analysis.windows.net/powerbi/api/.default']
 
+    client = msal.ConfidentialClientApplication(
+        app_id, 
+        authority=authority_url, 
+        client_credential=app_secret
+    )
+    
+    response = client.acquire_token_for_client(scopes)
+    token = response.get('access_token')
+    
+    return token
+
+
+token = get_access_token()
+headers = {
+    'Content-Type': 'application/json',
+    'Authorization': f'Bearer {token}'
+}
+
+
+# Get list of PPU workspaces as the TOM communication can happen only through XMLA
+def get_workspaces():
+    
+    workspaces = 'https://api.powerbi.com/v1.0/myorg/groups?$filter=(isOnDedicatedCapacity eq true)'
+    response_request = requests.get(workspaces, headers=headers)
+    result = response_request.json()
+    
+    workspace_name = [workspace['name'] for workspace in result['value']]
+    
+
+# Write Downloads Model.bim file to a specific folder on system
 def export_model_json(server: Tabular.Server):
     
+    folder_path = r"C:\Users\antsharma\Downloads\Power BI\\"
+
     for db in server.Databases:
 
         script = Tabular.JsonScripter.ScriptCreate(db)
@@ -42,24 +76,35 @@ def export_model_json(server: Tabular.Server):
             model_bim.write(raw_json)
             
             
-export_model_json(server)
-server.Disconnect()
+# Iterate each workspace and downlod Model.bim file
+def connect_workspace_and_export():
+    
+    workspaces = get_workspaces()
+    
+    for name in workspaces:
+        workspace_xmla = f"powerbi://api.powerbi.com/v1.0/myorg/{name}"
+        conn_string = f"DataSource={workspace_xmla};User ID=app:{app_id}@{pbi_tenant_id};Password={app_secret};"
+        
+        server = Tabular.Server()
+        server.Connect(conn_string)
+        
+        export_model_json(server)
+        server.Disconnect()
+        
 
-# Second step is to read the file and generate the database:
+connect_workspace_and_export()
 
-workspace_xmla = "new Power BI workspace"
-username = 'pbi service user id'
-password = 'pbi sevice user pass'
-conn_string = f"DataSource={workspace_xmla};User ID={username};Password={password};"
 
-server = Tabular.Server()
-server.Connect(conn_string)
+# Once all files are downloaded publish them to a workspace:
+
+workspace_xmla = "powerbi://api.powerbi.com/v1.0/myorg/Demo%20PPU"
+conn_string = f"DataSource={workspace_xmla};User ID=app:{app_id}@{pbi_tenant_id};Password={app_secret};"
 
 
 def publish_model_bim(bim_file_path, server: Tabular.Server):
     
     for filename in os.listdir(bim_file_path):
-        f = os.path.join(directory, filename)
+        f = os.path.join(bim_file_path, filename)
         
         if os.path.isfile(f):
             file_name = os.path.splitext(os.path.basename(f))[0]
@@ -81,8 +126,8 @@ def publish_model_bim(bim_file_path, server: Tabular.Server):
             )
 
             script = Tabular.JsonScripter.ScriptCreateOrReplace(db)
-            server.Execute(script)
 
-            
-publish_model_bim(folder_path, server)
+
+publish_model_bim(r"C:\Users\antsharma\Downloads\Power BI\\", server)
 server.Disconnect()
+            server.Execute(script)
