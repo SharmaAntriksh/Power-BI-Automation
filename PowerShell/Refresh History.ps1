@@ -26,6 +26,8 @@ $Workspaces | ForEach-Object {
                 WorkspaceName = $Workspace.Name;
                 DatasetID = $Dataset.Id;
                 DatasetName = $Dataset.Name;
+                DatasetOwner = $Dataset.configuredBy;
+                DatasetCreatedOn = $Dataset.createdDate;
                 RefreshID = $Refresh.RequestId;
                 RefreshType = $Refresh.refreshType;
                 RefreshStartTime = $Refresh.startTime;
@@ -39,5 +41,5 @@ $Workspaces | ForEach-Object {
 }
 
 $ResultArray | 
-    ` Select-Object -Property WorkspaceID, WorkspaceName, DatasetID, DatasetName, RefreshID, RefreshType, RefreshStartTime, RefreshEndTime |
+    ` Select-Object -Property WorkspaceID, WorkspaceName, DatasetID, DatasetName,DatasetOwner, DatasetCreatedOn, RefreshID, RefreshType, RefreshStartTime, RefreshEndTime |
     ` Export-Csv -NoTypeInformation -Path "C:\Users\antsharma\Downloads\refresh.csv"
